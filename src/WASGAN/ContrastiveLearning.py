@@ -116,14 +116,14 @@ class CLNet(nn.Module):
 
 
 class infoNCELoss(nn.Module):
-    def __init__(self, T):
+    def __init__(self):
         """
         Implements the infoNCE loss in the paper
         :param T: hyperparameter
         """
         super().__init__()
         self.exp_s = None
-        self.T = T
+
         self.cosine_similarity = nn.CosineSimilarity(dim=1)
 
     def loss(self, i: int, j: int) -> torch.Tensor:
@@ -149,9 +149,10 @@ class infoNCELoss(nn.Module):
         bsz, enc = z1.shape
 
         z = torch.cat([z1, z2], dim=0)
-        s = self.cosine_similarity(z, z).flatten()[1:].view(bsz - 1, bsz + 1)[:, :-1].reshape(bsz,
-                                                                                              bsz - 1)  # cosine simliarity of different vectors
-        self.exp_s = torch.exp(s / self.T)
+        s = self.cosine_similarity(z, z)
+        s = s.flatten()[1:].view(bsz - 1, bsz + 1)[:, :-1].reshape(bsz, bsz - 1)  # cosine simliarity
+
+        self.exp_s = torch.exp(s / torch.sqrt(bsz))
         L = 0
         for m in range(bsz):
             L += self.loss(m, bsz + m) + self.loss(bsz + m, m)
