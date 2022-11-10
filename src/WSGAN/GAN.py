@@ -12,3 +12,9 @@ class DeconvBlock(nn.Module):
         )
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.block(x)
+
+class Generator(nn.Module):
+    def __init__(self, depth, out_channels, noise_size):
+        super(Generator, self).__init__()
+
+
