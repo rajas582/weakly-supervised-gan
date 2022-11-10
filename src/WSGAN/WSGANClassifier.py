@@ -162,4 +162,5 @@ class WSGANClassifier(nn.Module):
         glob_avg = F.avg_pool2d(glob_out, glob_out.shape[-1])
         glob_max = F.max_pool2d(glob_out, glob_out.shape[-1])
         glob_out = self.glob_dense(glob_max + glob_avg)
-        return loc_out + glob_out + res_out
+        return \
+            loc_out + glob_out + res_out
