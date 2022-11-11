@@ -7,26 +7,8 @@ import CLLoss
 from src.Trainer import Trainer
 from src.utils import wsgan_loaders
 
+
 class ContrastiveLearningTrainer(Trainer):
-    def __init__(
-            self,
-            model: ContrastiveLearning.CLNet,
-            device: str,
-            train_loader: DataLoader,
-            test_loader: DataLoader,
-            epochs: int,
-            optimizer: optim.optimizer,
-            loss: CLLoss.CLLoss
-    ):
-        super().__init__(
-            model,
-            device,
-            train_loader,
-            test_loader,
-            epochs,
-            optimizer,
-            loss
-        )
 
     def train(self):
         train_loss = 0
@@ -42,7 +24,6 @@ class ContrastiveLearningTrainer(Trainer):
             self.optimizer.step()
             train_loss += l.item()
         return train_loss * 100 / len(self.train_loader)
-
 
     def test(self):
         self.model.eval()
@@ -63,6 +44,7 @@ class ContrastiveLearningTrainer(Trainer):
             train_loss.append(self.train())
             test_loss.append(self.test())
         return train_loss, test_loss
+
 
 if __name__ == '__main__':
     clnet = ContrastiveLearning.CLNet(1)
