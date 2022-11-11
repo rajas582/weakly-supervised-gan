@@ -47,9 +47,9 @@ class infoNCELoss(nn.Module):
 
 
 class CLLoss(nn.Module):
-    def __init__(self, T):
+    def __init__(self):
         super().__init__()
-        self.info_loss = infoNCELoss(T)
+        self.info_loss = infoNCELoss()
         self.mse_loss = nn.MSELoss()
 
     def forward(self, z1: torch.Tensor, z2: torch.Tensor, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:

@@ -75,6 +75,7 @@ class Projector(nn.Module):
 
 class Path(nn.Module):
     def __init__(self, output_channels):
+        super(Path, self).__init__()
         self.enc = Encoder()
         self.proj = Projector(2048, output_channels)
 
@@ -97,14 +98,14 @@ class CLNet(nn.Module):
         self.path2 = Path(output_channels)
         self.dec = Decoder()
 
-    def forward(self, X: list):
+    def forward(self, X: list, device: str):
         """
         Implements the net found in figure 3
         :param X: tensor of images
             Shape: `(2 * bsz, channels, H, W)
         :return:
         """
-        X = AugmentationPipeline(X)
+        X = AugmentationPipeline(X).to(device)
         x1 = X[::2]
         x2 = X[1::2]
         h1, z1 = self.path1(x1)
