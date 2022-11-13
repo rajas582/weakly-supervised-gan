@@ -6,11 +6,11 @@ from sklearn.model_selection import train_test_split
 # import numpy as np
 
 
-class GANLoader():
+class GANLoader:
     def __init__(self, path, download=True):
-        '''
+        """
         Give path for where to download the data
-        '''
+        """
 
         self.path = path
         self.download = download
@@ -95,7 +95,7 @@ class GANLoader():
         '''
         Returns augmented data loader
         '''
-        train_data, val_data, test_data = self.original_loader()
+        train_data, val_data, test_data = self.augmented_set()
 
         train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
                                                    num_workers=0)
