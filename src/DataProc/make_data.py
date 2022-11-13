@@ -60,7 +60,7 @@ class GANLoader:
         '''
         Returns original data loader
         '''
-        train_data, val_data, test_data = self.original_loader()
+        train_data, val_data, test_data = self.original_set()
 
         train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
                                                    shuffle=True, num_workers=0)
