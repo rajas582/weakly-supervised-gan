@@ -2,6 +2,8 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import train_test_split
+
+
 # import matplotlib.pyplot as plt
 # import numpy as np
 
@@ -79,17 +81,22 @@ class GANLoader:
                                         download=self.download,
                                         train=True,
                                         transform=self.transform_aug)
-
+        aug_test = datasets.FashionMNIST(self.path,
+                                        download=self.download,
+                                        train=False,
+                                        transform=self.transform_aug)
         train_ind, val_ind = self.train_val_split()
 
         train_data = Subset(self.trainset, train_ind)
         aug_data = Subset(aug_set, train_ind)
+        aug_val_data = Subset(aug_set, val_ind)
         val_data = Subset(self.trainset, val_ind)
         test_data = self.testset
 
-        aug_train_data = torch.utils.data.ConcatDataset([[train_data[i], aug_data[i]] for i in range(len(train_data))])
-
-        return aug_train_data, val_data, test_data
+        aug_train = AugmentedDataset(train_data, aug_data)
+        aug_val = AugmentedDataset(val_data, aug_val_data)
+        aug_test = AugmentedDataset(test_data, aug_test)
+        return aug_train, aug_val, aug_test
 
     def augmented_loader(self, val=True, batch_size=64):
         '''
@@ -98,10 +105,21 @@ class GANLoader:
         train_data, val_data, test_data = self.augmented_set()
 
         train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
-                                                   num_workers=0)
+                                                   num_workers=3)
         val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size,
                                                  shuffle=True, num_workers=0)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size,
                                                   shuffle=True, num_workers=0)
         return train_loader, val_loader, test_loader
 
+
+class AugmentedDataset(torch.utils.data.Dataset):
+    def __init__(self, augmented_set_1, augmented_set_2):
+        self.augmented_set_1 = augmented_set_1
+        self.augmented_set_2 = augmented_set_2
+
+    def __len__(self):
+        return len(self.augmented_set_1)
+
+    def __getitem__(self, item):
+        return self.augmented_set_1[item], self.augmented_set_2[item]

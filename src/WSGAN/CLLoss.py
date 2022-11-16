@@ -11,8 +11,6 @@ class infoNCELoss(nn.Module):
         super().__init__()
         self.exp_s = None
 
-        self.cosine_similarity = nn.CosineSimilarity(dim=1)
-
     def loss(self, i: int, j: int) -> torch.Tensor:
         """
         Computes the loss found in equation 2 of the paper
@@ -33,17 +31,18 @@ class infoNCELoss(nn.Module):
             Shape: `(bsz, end_dim)'
         :return: loss
         """
-        bsz, enc = z1.shape
 
         z = torch.cat([z1, z2], dim=0)
-        s = self.cosine_similarity(z, z)
+        z = z / z.norm(dim=-1)[:, None]
+        s = torch.matmul(z, z.permute(1, 0))
+        bsz, enc = s.shape
         s = s.flatten()[1:].view(bsz - 1, bsz + 1)[:, :-1].reshape(bsz, bsz - 1)  # cosine simliarity
-
-        self.exp_s = torch.exp(s / torch.sqrt(bsz))
+        self.exp_s = torch.exp(s / bsz ** .5)
         L = 0
-        for m in range(bsz):
-            L += self.loss(m, bsz + m) + self.loss(bsz + m, m)
-        return 1 / 2 * bsz * L
+        local_bsz = bsz // 2
+        out = self.exp_s / torch.sum(self.exp_s, dim=1)[:, None]
+        L = torch.sum(out[:local_bsz, local_bsz - 1:].diag()) + torch.sum(out[local_bsz:, :local_bsz].diag())
+        return 1 / bsz * L
 
 
 class CLLoss(nn.Module):
@@ -65,5 +64,5 @@ class CLLoss(nn.Module):
             Shape: `(bsz, in_channels, H, W)'
         :return: the loss of the batch
         """
-        bsz, _, _, _ = X
-        return self.info_loss(z1, z2) + 1 / bsz * self.mse_loss(X, Y)
+        bsz, _, _, _ = X.shape
+        return self.info_loss(z1, z2) + 1 / bsz * self.mse_loss(X, Y[::2])

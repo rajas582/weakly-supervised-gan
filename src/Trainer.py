@@ -13,7 +13,7 @@ class Trainer(ABC):
             optimizer,
             loss
     ):
-        self.model = model
+        self.model = model.to(device)
         self.device = device
         self.train_loader = train_loader
         self.test_loader = test_loader
