@@ -1,4 +1,3 @@
-
 # Rajas Please put your pipline here
 def AugmentationPipeline(images: list):
     """
@@ -7,4 +6,8 @@ def AugmentationPipeline(images: list):
     :param images: list[PIL.Image]
     :return: torch.Tensor
     """
+    pass
+
+# Training and validation loaders of the mnsitFashion dataset
+def wsgan_loaders():
     pass
