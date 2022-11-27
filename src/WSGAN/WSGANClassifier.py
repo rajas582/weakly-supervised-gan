@@ -34,7 +34,7 @@ class ConvolutionBlock(nn.Module):
         hidden_channels = output_channels // 2
         self.conv_block1 = _ConvolutionalBlock(input_channels, hidden_channels)
         self.conv_block2 = _ConvolutionalBlock(hidden_channels, output_channels)
-        self.avg_pool = nn.AvgPool2d(1)
+        self.avg_pool = nn.AvgPool2d(kernel_size=2, stride=1)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -46,7 +46,7 @@ class ConvolutionBlock(nn.Module):
         """
         block1 = self.conv_block1(X)
         block2 = self.conv_block2(block1)
-        return block2 + self.avg_pool(block1)
+        return block2 + self.avg_pool(torch.cat([block1, block1], dim=1))
 
 
 class SpatialAttention(nn.Module):
@@ -68,9 +68,9 @@ class SpatialAttention(nn.Module):
         q = self.q(x).reshape(bsz, in_chans, h * w)
         k = self.k(x).reshape(bsz, in_chans, h * w)
         v = self.v(x).reshape(bsz, in_chans, h * w)
-        qk = torch.matmul(q.permute(0, 2, 1), k) / torch.sqrt(h * w)  # (bsz, h * w, h * w)
+        qk = torch.matmul(q.permute(0, 2, 1), k) / (h * w) ** .5  # (bsz, h * w, h * w)
         attn = torch.matmul(self.soft_max(qk), v.permute(0, 2, 1))  # (bsz, h * w, in_chans)
-        return self.out(attn).permute(0, 2, 1).reshape(bsz, in_chans, h, w)
+        return self.out(attn).permute(0,2,1).reshape(bsz, in_chans, h, w)
 
 
 class PixelAttention(nn.Module):
@@ -80,7 +80,6 @@ class PixelAttention(nn.Module):
         self.k = nn.Conv2d(in_chans, in_chans, kernel_size=1)
         self.v = nn.Conv2d(in_chans, in_chans, kernel_size=1)
         self.soft_max = nn.Softmax(dim=2)
-        self.out = nn.Linear(in_chans, in_chans)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -92,9 +91,9 @@ class PixelAttention(nn.Module):
         q = self.q(x).reshape(bsz, in_chans, h * w)
         k = self.k(x).reshape(bsz, in_chans, h * w)
         v = self.v(x).reshape(bsz, in_chans, h * w)
-        qk = torch.matmul(q, k.permute(0, 2, 1)) / torch.sqrt(h * w)  # (bsz, h * w, h * w)
+        qk = torch.matmul(q, k.permute(0, 2, 1)) / (h * w) ** .5  # (bsz, h * w, h * w)
         attn = torch.matmul(self.soft_max(qk), v)  # (bsz, h * w, in_chans)
-        return self.out(attn).reshape(bsz, in_chans, h, w)
+        return attn.permute(0, 2, 1).reshape(bsz, in_chans, h, w)
 
 
 class ClassifierBlock(nn.Module):
@@ -144,23 +143,29 @@ class Classifier(nn.Module):
 class WSGANClassifier(nn.Module):
     def __init__(self, in_chans, out_chans, spec_chans, resnet_path: str = 'model_dump/resnet_conv.pt', n_classes=10):
         super().__init__()
+        self.resnet_convert = nn.Linear(1, 3)
         self.resnet_conv = torch.load(resnet_path)
-        self.resnet_fc = nn.Linear(2048, n_classes + 1)
+        self.resnet_fc = nn.Linear(512, n_classes + 1)
         self.local_class = Classifier(in_chans, out_chans, spec_chans, depth=1)
         self.global_class = Classifier(in_chans, out_chans, spec_chans)
         self.glob_dense = nn.Linear(spec_chans, n_classes + 1)
         self.loc_dense = nn.Linear(spec_chans, n_classes + 1)
 
     def forward(self, x: torch.Tensor):
-        res_out = self.resnet_conv(x)
+
+        res_in = self.resnet_convert(x.permute(0,2,3,1)).permute(0,3,1, 2)
+        res_out = self.resnet_conv(res_in)
         res_out = self.resnet_fc(res_out.flatten(1))
         loc_out = self.local_class(x)
         loc_avg = F.avg_pool2d(loc_out, loc_out.shape[-1])
         loc_max = F.max_pool2d(loc_out, loc_out.shape[-1])
-        loc_out = self.loc_dense(loc_avg + loc_max)
+        loc_out = self.loc_dense((loc_avg + loc_max).flatten(1))
         glob_out = self.global_class(x)
         glob_avg = F.avg_pool2d(glob_out, glob_out.shape[-1])
         glob_max = F.max_pool2d(glob_out, glob_out.shape[-1])
-        glob_out = self.glob_dense(glob_max + glob_avg)
-        return \
-            loc_out + glob_out + res_out
+        glob_out = self.glob_dense((glob_max + glob_avg).flatten(1))
+        out = loc_out + glob_out + res_out
+        out[:, :-1] = F.softmax(out[:,:-1], dim=1)
+        out[:, -1] = F.sigmoid(out[:, -1])
+        return out
+
