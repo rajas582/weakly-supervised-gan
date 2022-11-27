@@ -9,6 +9,7 @@ import CLLoss
 from src.Trainer import Trainer
 from src.DataProc.make_data import GANLoader
 
+
 class ContrastiveLearningTrainer(Trainer):
 
     def train(self):
@@ -70,8 +71,8 @@ if __name__ == '__main__':
     clnet = ContrastiveLearning.CLNet(100)
     clloss = CLLoss.CLLoss()
     adam = optim.Adam(clnet.parameters())
-    eps = 15
-    data_maker = GANLoader('../../data')
+    eps = 25
+    data_maker = GANLoader('../data')
     train_ldr, _, test_ldr = data_maker.augmented_loader(batch_size=100)
     clnettrainer = ContrastiveLearningTrainer(
         clnet,

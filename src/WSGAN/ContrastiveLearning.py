@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision.models import resnet18
 
-from src.utils import AugmentationPipeline
+# from src.utils import AugmentationPipeline
 
 """
 Implementation of the first network in https://arxiv.org/pdf/2111.14605.pdf. It is a contrastive learning 
@@ -78,7 +78,8 @@ class Path(nn.Module):
         self.enc = Encoder()
         self.proj = Projector(512, output_channels)
 
-    def forward(self, X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, X: torch.Tensor):
+            # -> tuple(torch.Tensor, torch.Tensor):
         """
         Implements one of the paths in figure 3
         :param X: tensor of images
