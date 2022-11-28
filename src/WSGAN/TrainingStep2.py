@@ -147,7 +147,7 @@ if __name__ == '__main__':
     data_maker = GANLoader('../../data')
     train_ldr, _, test_ldr = data_maker.original_loader(batch_size=512)
 
-    classifier = WSGANClassifier.WSGANClassifier(1, 128, 128, 'model_dump/resnet.py')
+    classifier = WSGANClassifier.SimpleClassifier(1, 10)
     generator = WSGANGenerator.Generator(9,1,noise_features)
     class_loss = GANLoss.DiscriminatorLoss(n_classes)
     gen_loss = GANLoss.GeneratorLoss(n_classes)

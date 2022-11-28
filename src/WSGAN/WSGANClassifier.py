@@ -70,7 +70,7 @@ class SpatialAttention(nn.Module):
         v = self.v(x).reshape(bsz, in_chans, h * w)
         qk = torch.matmul(q.permute(0, 2, 1), k) / (h * w) ** .5  # (bsz, h * w, h * w)
         attn = torch.matmul(self.soft_max(qk), v.permute(0, 2, 1))  # (bsz, h * w, in_chans)
-        return self.out(attn).permute(0,2,1).reshape(bsz, in_chans, h, w)
+        return self.out(attn).permute(0, 2, 1).reshape(bsz, in_chans, h, w)
 
 
 class PixelAttention(nn.Module):
@@ -152,8 +152,7 @@ class WSGANClassifier(nn.Module):
         self.loc_dense = nn.Linear(spec_chans, n_classes + 1)
 
     def forward(self, x: torch.Tensor):
-
-        res_in = self.resnet_convert(x.permute(0,2,3,1)).permute(0,3,1, 2)
+        res_in = self.resnet_convert(x.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
         res_out = self.resnet_conv(res_in)
         res_out = self.resnet_fc(res_out.flatten(1))
         loc_out = self.local_class(x)
@@ -165,7 +164,35 @@ class WSGANClassifier(nn.Module):
         glob_max = F.max_pool2d(glob_out, glob_out.shape[-1])
         glob_out = self.glob_dense((glob_max + glob_avg).flatten(1))
         out = loc_out + glob_out + res_out
-        out[:, :-1] = F.softmax(out[:,:-1], dim=1)
+        out[:, :-1] = F.softmax(out[:, :-1], dim=1)
         out[:, -1] = F.sigmoid(out[:, -1])
         return out
 
+
+class SimpleClassifier(nn.Module):
+    def __init__(self, in_chans, n_classes):
+        super().__init__()
+
+        self.simpclass = nn.Sequential(
+            nn.Conv2d(in_chans, 8, kernel_size=4, stride=2),  # bsz, 8, 13, 13
+            nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.Conv2d(8, 16, kernel_size=4, stride=2),  # bsz, 16, 5, 5
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Conv2d(16, 32, kernel_size=4, stride=2),  # bsz, 32, 1, 1
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=1, stride=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Flatten(1),
+            nn.Linear(64, n_classes + 1)
+        )
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x: torch.Tensor):
+        x = self.simpclass(x)
+        x[:, :-1] = F.softmax(x[:, :-1], dim=-1)
+        x[:, -1] = self.sigmoid(x[:, -1])
+        return x
