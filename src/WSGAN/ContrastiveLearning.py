@@ -93,8 +93,7 @@ class Path(nn.Module):
 class CLNet(nn.Module):
     def __init__(self, output_channels):
         super().__init__()
-        self.path1 = Path(output_channels)
-        self.path2 = Path(output_channels)
+        self.path = Path(output_channels)
         self.dec = Decoder()
 
     def forward(self, X: torch.Tensor, device: str):
@@ -106,8 +105,8 @@ class CLNet(nn.Module):
         """
         x1 = X[::2]
         x2 = X[1::2]
-        h1, z1 = self.path1(x1)
-        h2, z2 = self.path2(x2)
+        h1, z1 = self.path(x1)
+        h2, z2 = self.path(x2)
 
         gen_image = self.dec(h1 + h2)
 

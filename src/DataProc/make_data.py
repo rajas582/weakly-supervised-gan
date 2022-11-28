@@ -20,10 +20,11 @@ class GANLoader:
                                                       transforms.Normalize((0.5,), (0.5,))])
 
         self.transform_aug = transform1 = transforms.Compose([
-            transforms.RandomCrop(28, pad_if_needed=True),
+            transforms.RandomResizedCrop(28),
             transforms.ColorJitter(brightness=.5, hue=.3),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomVerticalFlip(p=0.5),
+            transforms.Resize(28),
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))])
 

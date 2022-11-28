@@ -37,6 +37,8 @@ class ContrastiveLearningTrainer(Trainer):
 
         plt.imshow(X[0][0].cpu())
         plt.show()
+        plt.imshow(X[1][0].cpu())
+        plt.show()
         return train_loss * 100 / len(self.train_loader)
 
     def test(self):
@@ -70,7 +72,7 @@ if __name__ == '__main__':
     clnet = ContrastiveLearning.CLNet(100)
     clloss = CLLoss.CLLoss()
     adam = optim.Adam(clnet.parameters())
-    eps = 15
+    eps = 50
     data_maker = GANLoader('../../data')
     train_ldr, _, test_ldr = data_maker.augmented_loader(batch_size=100)
     clnettrainer = ContrastiveLearningTrainer(

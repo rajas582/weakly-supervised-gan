@@ -33,15 +33,14 @@ class infoNCELoss(nn.Module):
         """
 
         z = torch.cat([z1, z2], dim=0)
-        z = z / z.norm(dim=-1)[:, None]
+        z = z / torch.clamp(z.norm(dim=-1)[:, None], min=1e-5)
         s = torch.matmul(z, z.permute(1, 0))
         bsz, enc = s.shape
         s = s.flatten()[1:].view(bsz - 1, bsz + 1)[:, :-1].reshape(bsz, bsz - 1)  # cosine simliarity
         self.exp_s = torch.exp(s / bsz ** .5)
-        L = 0
         local_bsz = bsz // 2
-        out = self.exp_s / torch.sum(self.exp_s, dim=1)[:, None]
-        L = torch.sum(out[:local_bsz, local_bsz - 1:].diag()) + torch.sum(out[local_bsz:, :local_bsz].diag())
+        out = -torch.log(self.exp_s / torch.sum(self.exp_s, dim=1)[:, None])
+        L = torch.sum(out[:local_bsz, local_bsz - 1:].diag() + out[local_bsz:, :local_bsz].diag())
         return 1 / bsz * L
 
 
@@ -65,4 +64,4 @@ class CLLoss(nn.Module):
         :return: the loss of the batch
         """
         bsz, _, _, _ = X.shape
-        return self.info_loss(z1, z2) + 1 / bsz * self.mse_loss(X, Y[::2])
+        return self.info_loss(z1, z2) + self.mse_loss(X, Y[::2])
