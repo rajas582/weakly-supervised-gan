@@ -1,0 +1,18 @@
+Index: src/WSGAN/TrainStep1.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import torch\r\nfrom torch.utils.data import DataLoader\r\nfrom torch import optim\r\n\r\nimport matplotlib.pyplot as plt\r\nimport tqdm\r\nimport ContrastiveLearning\r\nimport CLLoss\r\nfrom src.Trainer import Trainer\r\nfrom src.DataProc.make_data import GANLoader\r\n\r\nclass ContrastiveLearningTrainer(Trainer):\r\n\r\n    def train(self):\r\n        train_loss = 0\r\n        self.model.train()\r\n\r\n        # X are the fashionMNIST images as PIL\r\n\r\n        loop = tqdm.tqdm(enumerate(self.train_loader), total=len(self.train_loader))\r\n        for idx, (X, y) in loop:\r\n            self.optimizer.zero_grad()\r\n            X1 = X[0]\r\n            X2 = y[0]\r\n            x = torch.zeros(X1.shape[0] * 2, *X1.shape[1:])\r\n            x[::2] = X1\r\n            x[1::2] = X2\r\n            X, y = x.to(self.device), x.to(self.device)\r\n            gen_im, (z1, z2) = self.model(X, self.device)\r\n            l = self.loss(z1, z2, gen_im, y)\r\n            l.backward()\r\n            self.optimizer.step()\r\n            loop.set_postfix({'loss': l.detach()})\r\n            train_loss += l.item()\r\n        plt.imshow(gen_im.cpu().detach()[0][0])\r\n        plt.show()\r\n\r\n        plt.imshow(X[0][0].cpu())\r\n        plt.show()\r\n        return train_loss * 100 / len(self.train_loader)\r\n\r\n    def test(self):\r\n        self.model.eval()\r\n        test_loss = 0\r\n\r\n        with torch.no_grad():\r\n            for X, y in self.test_loader:\r\n                X1 = X[0]\r\n                X2 = y[0]\r\n                x = torch.zeros(X1.shape[0] * 2, *X1.shape[1:])\r\n                x[::2] = X1\r\n                x[1::2] = X2\r\n                X, y = x.to(self.device), x.to(self.device)\r\n                gen_im, (z1, z2) = self.model(X, self.device)\r\n                l = self.loss(z1, z2, gen_im, y)\r\n                test_loss += l.item()\r\n        return test_loss * 100 / len(self.test_loader)\r\n\r\n    def model_trainer(self):\r\n        train_loss = []\r\n        test_loss = []\r\n        print(self.device)\r\n        for epoch in range(1, self.epochs + 1):\r\n            train_loss.append(self.train())\r\n            test_loss.append(self.test())\r\n        return train_loss, test_loss\r\n\r\n\r\nif __name__ == '__main__':\r\n    clnet = ContrastiveLearning.CLNet(100)\r\n    clloss = CLLoss.CLLoss()\r\n    adam = optim.Adam(clnet.parameters())\r\n    eps = 15\r\n    data_maker = GANLoader('../../data')\r\n    train_ldr, _, test_ldr = data_maker.augmented_loader(batch_size=100)\r\n    clnettrainer = ContrastiveLearningTrainer(\r\n        clnet,\r\n        'cuda' if torch.cuda.is_available() else 'cpu',\r\n        train_ldr,\r\n        test_ldr,\r\n        eps,\r\n        adam,\r\n        clloss\r\n    )\r\n    train_loss, test_loss = clnettrainer.model_trainer()\r\n    clnettrainer.save_model('model_dump/Contrastive_learning.pt')\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/WSGAN/TrainStep1.py b/src/WSGAN/TrainStep1.py
+--- a/src/WSGAN/TrainStep1.py	(revision b03ee62f87488b24a949ba451d6344f63ffb8c64)
++++ b/src/WSGAN/TrainStep1.py	(date 1669307263935)
+@@ -9,6 +9,7 @@
+ from src.Trainer import Trainer
+ from src.DataProc.make_data import GANLoader
+ 
++
+ class ContrastiveLearningTrainer(Trainer):
+ 
+     def train(self):
