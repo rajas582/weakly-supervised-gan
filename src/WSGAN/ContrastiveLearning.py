@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torchvision.models import resnet18
 
-from src.utils import AugmentationPipeline
 
 """
 Implementation of the first network in https://arxiv.org/pdf/2111.14605.pdf. It is a contrastive learning 

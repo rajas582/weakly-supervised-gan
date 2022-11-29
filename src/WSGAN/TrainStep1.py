@@ -2,13 +2,14 @@ import torch
 from torch.utils.data import DataLoader
 from torch import optim
 
+import os
 import matplotlib.pyplot as plt
 import tqdm
 import ContrastiveLearning
 import CLLoss
 from src.Trainer import Trainer
 from src.DataProc.make_data import GANLoader
-
+print(os.getcwd(), 'hi')
 class ContrastiveLearningTrainer(Trainer):
 
     def train(self):
@@ -69,10 +70,10 @@ class ContrastiveLearningTrainer(Trainer):
 
 
 if __name__ == '__main__':
-    clnet = ContrastiveLearning.CLNet(100)
+    clnet = ContrastiveLearning.CLNet(512)
     clloss = CLLoss.CLLoss()
     adam = optim.Adam(clnet.parameters())
-    eps = 50
+    eps = 10
     data_maker = GANLoader('../../data')
     train_ldr, _, test_ldr = data_maker.augmented_loader(batch_size=100)
     clnettrainer = ContrastiveLearningTrainer(

@@ -150,7 +150,7 @@ class WSGANClassifier(nn.Module):
         self.global_class = Classifier(in_chans, out_chans, spec_chans)
         self.glob_dense = nn.Linear(spec_chans, n_classes + 1)
         self.loc_dense = nn.Linear(spec_chans, n_classes + 1)
-
+        self.sigmoid_ = nn.Sigmoid()
     def forward(self, x: torch.Tensor):
         res_in = self.resnet_convert(x.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
         res_out = self.resnet_conv(res_in)
@@ -164,9 +164,12 @@ class WSGANClassifier(nn.Module):
         glob_max = F.max_pool2d(glob_out, glob_out.shape[-1])
         glob_out = self.glob_dense((glob_max + glob_avg).flatten(1))
         out = loc_out + glob_out + res_out
-        out[:, :-1] = F.softmax(out[:, :-1], dim=1)
-        out[:, -1] = F.sigmoid(out[:, -1])
+
         return out
+    def sigmoid(self, x):
+        x[:, :-1] = F.softmax(x[:, :-1], dim=-1)
+        x[:, -1] = self.sigmoid_(x[:, -1])
+        return x
 
 
 class SimpleClassifier(nn.Module):
@@ -174,25 +177,34 @@ class SimpleClassifier(nn.Module):
         super().__init__()
 
         self.simpclass = nn.Sequential(
-            nn.Conv2d(in_chans, 8, kernel_size=4, stride=2),  # bsz, 8, 13, 13
+            nn.utils.spectral_norm(nn.Conv2d(in_chans, 8, kernel_size=4, stride=2)),  # bsz, 8, 13, 13
             nn.BatchNorm2d(8),
             nn.ReLU(),
-            nn.Conv2d(8, 16, kernel_size=4, stride=2),  # bsz, 16, 5, 5
+            nn.utils.spectral_norm(nn.Conv2d(8, 16, kernel_size=4, stride=2)),  # bsz, 16, 5, 5)
             nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.Conv2d(16, 32, kernel_size=4, stride=2),  # bsz, 32, 1, 1
+            nn.utils.spectral_norm(nn.Conv2d(16, 32, kernel_size=4, stride=2)),  # bsz, 32, 1, 1
             nn.BatchNorm2d(32),
             nn.ReLU(),
+
+        )
+        self.last = nn.Sequential(
             nn.Conv2d(32, 64, kernel_size=1, stride=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Flatten(1),
-            nn.Linear(64, n_classes + 1)
         )
-        self.sigmoid = nn.Sigmoid()
+        self.proj = nn.Linear(64, n_classes + 1)
+        self.sigmoid_ = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor):
         x = self.simpclass(x)
+        x = self.last(x)
+        x = self.proj(x)
+
+        return x
+
+    def sigmoid(self, x):
         x[:, :-1] = F.softmax(x[:, :-1], dim=-1)
-        x[:, -1] = self.sigmoid(x[:, -1])
+        x[:, -1] = self.sigmoid_(x[:, -1])
         return x
