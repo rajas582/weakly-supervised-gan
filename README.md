@@ -11,9 +11,9 @@ This project implements a weakly supervised GAN classification model that can la
 ## Key Features
 
 - **Weakly Supervised Training:** Utilizes weak supervision signals for training, reducing the reliance on fully labeled datasets.
-
-  
-- **Flexible Constraint Generation:** Generates images that adhere to specific constraints or characteristics provided by weak supervision signals.
+  ![Weakly Supervised GAN architecture](https://github.com/rajaspandey/weakly-supervised-gan/blob/main/docs/DLProjarchitecture.drawio.png)
+- **Accurate classification with limited labeled data:** Achieves accuracy of 89% with only 50% clean data.
+  ![Prediction on FashionMNIST dataset](https://github.com/rajaspandey/weakly-supervised-gan/blob/main/docs/NR_WSGAN_Top3.png)
 - **High-Quality Image Generation:** Produces realistic and high-quality images that satisfy the desired constraints.
 
 ## Installation
