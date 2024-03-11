@@ -11,6 +11,8 @@ This project implements a weakly supervised GAN classification model that can la
 ## Key Features
 
 - **Weakly Supervised Training:** Utilizes weak supervision signals for training, reducing the reliance on fully labeled datasets.
+
+  
 - **Flexible Constraint Generation:** Generates images that adhere to specific constraints or characteristics provided by weak supervision signals.
 - **High-Quality Image Generation:** Produces realistic and high-quality images that satisfy the desired constraints.
 
@@ -19,25 +21,11 @@ This project implements a weakly supervised GAN classification model that can la
 1. Clone the repository:
 
     ```
-    git clone https://github.com/your_username/weakly-supervised-gan.git
+    git clone https://github.com/rajaspandey/weakly-supervised-gan.git
     ```
 
-3. (Optional) Set up your environment (e.g., virtual environment) as needed.
+2. (Optional) Set up your environment (e.g., virtual environment) as needed.
 
-## Usage
-
-1. Prepare your dataset and weak supervision signals.
-2. Train the weakly supervised GAN model:
-
-    ```
-    python train.py --data_path /path/to/dataset --labels /path/to/weak_labels.csv
-    ```
-
-3. Generate images adhering to specific constraints:
-
-    ```
-    python generate.py --constraints constraint1 constraint2 ...
-    ```
 
 ## Contributing
 
@@ -49,9 +37,6 @@ Contributions are welcome! If you would like to contribute to this project, plea
 4. Push to the branch (`git push origin feature/YourFeature`).
 5. Create a new Pull Request.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE]() file for details.
 
 ## Acknowledgments
 
